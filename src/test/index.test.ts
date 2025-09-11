@@ -5,6 +5,9 @@ import { testInBrowser } from "./testInBrowser";
 import {
   basicHTML,
   fetchProxy,
+  fetchProxyRelative,
+  fetchProxyBoth,
+  xhrRelative,
   jsScriptTag,
   jsScriptTagTypeModule,
   styleTest,
@@ -49,6 +52,18 @@ describe("Magic Sandbox", () => {
 
   it("fetchProxy", async () => {
     await testInBrowser(browser, fetchProxy, "Hello, Fetch!");
+  });
+
+  it("fetchProxyRelative", async () => {
+    await testInBrowser(browser, fetchProxyRelative, "Hello, Relative Fetch!");
+  });
+
+  it("fetchProxyBoth - both relative URL styles work", async () => {
+    await testInBrowser(browser, fetchProxyBoth, "Hello, Both Work!");
+  });
+
+  it("xhrRelative - XMLHttpRequest with relative URL", async () => {
+    await testInBrowser(browser, xhrRelative, "testRoot");
   });
 
   it("should handle CSS file loading", async () => {

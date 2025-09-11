@@ -21,12 +21,18 @@ export function generateInterceptorScript(
   
     // Override open method to intercept file requests
     window.XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-      if (__fileNames.includes(url)) {
-        this.file = url;
-        this.responseText = __files[url];
+      // Normalize relative URLs by removing './' prefix
+      let normalizedUrl = url;
+      if (typeof url === 'string' && url.startsWith('./')) {
+        normalizedUrl = url.substring(2);
+      }
+      
+      if (__fileNames.includes(normalizedUrl)) {
+        this.file = normalizedUrl;
+        this.responseText = __files[normalizedUrl];
         
         // Handle XML files
-        if (url.endsWith(".xml")) {
+        if (normalizedUrl.endsWith(".xml")) {
           try {
             const parser = new DOMParser();
             this.responseXML = parser.parseFromString(this.responseText, "text/xml");
@@ -148,9 +154,15 @@ export function generateInterceptorScript(
         url = url.replace('blob://', 'http://');
       }
       
+      // Normalize relative URLs by removing './' prefix
+      let normalizedUrl = url;
+      if (typeof url === 'string' && url.startsWith('./')) {
+        normalizedUrl = url.substring(2);
+      }
+      
       // Intercept requests for local files
-      if (__fileNames.includes(url)) {
-        const responseText = __files[url];
+      if (__fileNames.includes(normalizedUrl)) {
+        const responseText = __files[normalizedUrl];
         
         return Promise.resolve({
           ok: true,
