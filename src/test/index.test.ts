@@ -2,6 +2,7 @@ import puppeteer, { Browser } from "puppeteer";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { magicSandbox } from "../index";
 import { testInBrowser } from "./testInBrowser";
+import { testInBrowserWithProxyParent } from "./testInBrowserWithProxyParent";
 import {
   basicHTML,
   fetchProxy,
@@ -14,12 +15,22 @@ import {
   xmlTest,
   protocolTest,
   jsScriptTagWithDollarSigns,
+  proxyRouteExactFetch,
+  proxyRouteGlobFetch,
+  proxyRouteSuffixFetch,
+  proxyRouteNoMatchFallback,
+  proxyRoute404Response,
+  proxyRouteTimeout,
+  proxyRouteRuntimeInjection,
+  proxyRouteMultipleRoutes,
 } from "./fixtures";
 
 let browser: Browser;
 
 beforeAll(async () => {
-  browser = await puppeteer.launch();
+  browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
 });
 
 afterAll(async () => {
@@ -78,5 +89,91 @@ describe("Magic Sandbox", () => {
     const srcdoc = magicSandbox(protocolTest);
     expect(srcdoc).toContain('href="https://fonts.googleapis.com');
     expect(srcdoc).toContain('src="https://code.jquery.com');
+  });
+});
+
+describe("ProxyRoute", () => {
+  it("exact path match via fetch", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteExactFetch,
+      [{ paths: ["data.csv"] }],
+      { "data.csv": "Hello, Proxy Exact!" },
+      "Hello, Proxy Exact!",
+    );
+  });
+
+  it("glob path match via fetch", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteGlobFetch,
+      [{ paths: ["/data/*"] }],
+      { "/data/sales.csv": "Hello, Proxy Glob!" },
+      "Hello, Proxy Glob!",
+    );
+  });
+
+  it("suffix pattern match via fetch", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteSuffixFetch,
+      [{ paths: ["*.csv"] }],
+      { "report.csv": "Hello, Proxy Suffix!" },
+      "Hello, Proxy Suffix!",
+    );
+  });
+
+  it("no match falls through to inlined content", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteNoMatchFallback,
+      [{ paths: ["/data/*"] }],
+      { "/data/ignored.csv": "should not reach here" },
+      "Hello, Local!",
+    );
+  });
+
+  it("parent returns 404 error response", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRoute404Response,
+      [{ paths: ["unknown.csv"] }],
+      { "unknown.csv": null }, // null sentinel → parent sends error
+      "404",
+    );
+  });
+
+  it("parent timeout returns 504", async () => {
+    // Use a short timeout (50ms) so the test completes quickly
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteTimeout,
+      [{ paths: ["never-responds.csv"] }],
+      {}, // parent never responds for this path
+      "504",
+      50,
+    );
+  });
+
+  it("runtime route injection via window.__magicSandboxProxyRoutes", async () => {
+    // Pass empty proxyRoutes array so the helper omits the option key.
+    // The fixture sets __magicSandboxProxyRoutes itself before the fetch.
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteRuntimeInjection,
+      [],
+      { "data.csv": "Hello, Runtime!" },
+      "Hello, Runtime!",
+    );
+  });
+
+  it("multiple routes use first-match semantics", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      proxyRouteMultipleRoutes,
+      [{ paths: ["/data/*"] }, { paths: ["*.csv"] }],
+      { "/data/report.csv": "Hello, First Match!" },
+      "Hello, First Match!",
+    );
   });
 });

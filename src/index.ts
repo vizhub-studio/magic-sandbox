@@ -1,6 +1,16 @@
-import { FileCollection } from "@vizhub/viz-types";
+import type { FileCollection } from "@vizhub/viz-types";
 import { fixProtocollessUrls } from "./fixProtocollessUrls.js";
 import { generateInterceptorScript } from "./generateInterceptorScript.js";
+
+/**
+ * A proxy route tells magic-sandbox to forward matching file requests
+ * to the parent window via postMessage instead of serving inlined content.
+ * Used for project-level dataset resolution at runtime.
+ */
+export interface ProxyRoute {
+  /** File path patterns that should be proxied (e.g., "/data/*", "data.csv") */
+  paths: string[];
+}
 
 /**
  * Magic Sandbox
@@ -23,7 +33,10 @@ function escapeRegExp(str: string): string {
 /**
  * Transforms HTML and files to create a sandboxed environment
  */
-export function magicSandbox(files: FileCollection): string {
+export function magicSandbox(
+  files: FileCollection,
+  options?: { proxyRoutes?: ProxyRoute[]; proxyTimeoutMs?: number },
+): string {
   let template = files["index.html"] || "";
   const { "index.html": _, ...remainingFiles } = files;
   // Fix protocol-less URLs (//example.com) to use HTTPS
@@ -79,7 +92,12 @@ export function magicSandbox(files: FileCollection): string {
   const filesString = encodeURIComponent(JSON.stringify(referencedFiles));
 
   // Create the interceptor script
-  const interceptorScript = generateInterceptorScript(fileNames, filesString);
+  const interceptorScript = generateInterceptorScript(
+    fileNames,
+    filesString,
+    options?.proxyRoutes,
+    options?.proxyTimeoutMs,
+  );
   const metaAndScript = `<meta charset="utf-8">${interceptorScript}`;
 
   // Extract DOCTYPE if present
