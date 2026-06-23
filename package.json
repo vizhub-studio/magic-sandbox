@@ -46,12 +46,12 @@
     "url": "https://github.com/vizhub-core/magic-sandbox/issues"
   },
   "devDependencies": {
-    "@types/node": "^24.3.1",
-    "npm-check-updates": "^18.1.0",
-    "prettier": "^3.6.2",
-    "puppeteer": "^24.20.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "@types/node": "^26.0.0",
+    "npm-check-updates": "^22.2.7",
+    "prettier": "^3.8.4",
+    "puppeteer": "^25.2.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "@vizhub/viz-types": "^0.5.0"
