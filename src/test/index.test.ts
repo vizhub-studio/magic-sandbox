@@ -85,10 +85,12 @@ describe("Magic Sandbox", () => {
     await testInBrowser(browser, xmlTest, "root");
   });
 
-  it("should convert protocol-less URLs to https", () => {
+  it("should convert external asset URLs to https", () => {
     const srcdoc = magicSandbox(protocolTest);
     expect(srcdoc).toContain('href="https://fonts.googleapis.com');
     expect(srcdoc).toContain('src="https://code.jquery.com');
+    expect(srcdoc).toContain('src="https://d3js.org/d3.v3.min.js');
+    expect(srcdoc).toContain('src="https://example.com/image.png');
   });
 });
 
