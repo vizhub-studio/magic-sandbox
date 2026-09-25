@@ -32,7 +32,7 @@ function fixTagAttributeUrl(
       continue;
     }
 
-    const tagEnd = html.indexOf(">", tagStart);
+    const tagEnd = findTagEnd(html, tagStart);
     if (tagEnd === -1) return html;
 
     const tag = html.slice(tagStart, tagEnd + 1);
@@ -52,4 +52,30 @@ function fixTagAttributeUrl(
       searchIndex = tagEnd + 1;
     }
   }
+}
+
+function findTagEnd(html: string, tagStart: number): number {
+  let quoteCharacter = "";
+
+  for (let index = tagStart; index < html.length; index += 1) {
+    const character = html[index];
+
+    if (quoteCharacter) {
+      if (character === quoteCharacter) {
+        quoteCharacter = "";
+      }
+      continue;
+    }
+
+    if (character === '"' || character === "'") {
+      quoteCharacter = character;
+      continue;
+    }
+
+    if (character === ">") {
+      return index;
+    }
+  }
+
+  return -1;
 }

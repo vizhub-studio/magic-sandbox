@@ -7,7 +7,7 @@ export const protocolTest = {
     <script src="http://d3js.org/d3.v3.min.js"></script>
   </head>
   <body>
-    <img src="http://example.com/image.png" alt="Protocol Test Image">
+    <img alt="Protocol > Test Image" src="http://example.com/image.png">
     <a href="http://example.com/page">Example Link</a>
     <div>Protocol Test</div>
     <script>
