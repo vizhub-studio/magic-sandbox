@@ -13,7 +13,7 @@ function fixTagAttributeUrl(
   tagName: string,
   attributeName: string,
 ): string {
-  const startTag = `<${tagName}`;
+  const startTag = `<${tagName.toLowerCase()}`;
   let searchIndex = 0;
   let lowerHtml = html.toLowerCase();
 
@@ -38,7 +38,7 @@ function fixTagAttributeUrl(
     const tag = html.slice(tagStart, tagEnd + 1);
     const updatedTag = tag.replace(
       new RegExp(
-        `(\\b${attributeName}=["'])(\\/\\/|http:\\/\\/)([^"']+)(["'])`,
+        `(\\b${attributeName}\\s*=\\s*["'])(\\/\\/|http:\\/\\/)([^"']+)(["'])`,
         "i",
       ),
       (_, prefix, protocol, url, suffix) => `${prefix}https://${url}${suffix}`,
