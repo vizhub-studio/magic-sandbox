@@ -15,11 +15,22 @@ function fixTagAttributeUrl(
 ): string {
   const startTag = `<${tagName}`;
   let searchIndex = 0;
+  let lowerHtml = html.toLowerCase();
 
   while (true) {
-    const lowerHtml = html.toLowerCase();
     const tagStart = lowerHtml.indexOf(startTag, searchIndex);
     if (tagStart === -1) return html;
+
+    const boundaryCharacter = lowerHtml[tagStart + startTag.length];
+    if (
+      boundaryCharacter &&
+      boundaryCharacter !== ">" &&
+      boundaryCharacter !== "/" &&
+      !/\s/.test(boundaryCharacter)
+    ) {
+      searchIndex = tagStart + startTag.length;
+      continue;
+    }
 
     const tagEnd = html.indexOf(">", tagStart);
     if (tagEnd === -1) return html;
@@ -35,6 +46,7 @@ function fixTagAttributeUrl(
 
     if (updatedTag !== tag) {
       html = `${html.slice(0, tagStart)}${updatedTag}${html.slice(tagEnd + 1)}`;
+      lowerHtml = html.toLowerCase();
       searchIndex = tagStart + updatedTag.length;
     } else {
       searchIndex = tagEnd + 1;
