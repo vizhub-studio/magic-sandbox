@@ -38,10 +38,30 @@ function fixTagAttributeUrl(
     const tag = html.slice(tagStart, tagEnd + 1);
     const updatedTag = tag.replace(
       new RegExp(
-        `(\\b${attributeName}\\s*=\\s*["'])(\\/\\/|http:\\/\\/)([^"']+)(["'])`,
+        `(\\b${attributeName}\\s*=\\s*)(?:(["'])([^"']*)\\2|([^\\s>]+))`,
         "i",
       ),
-      (_, prefix, protocol, url, suffix) => `${prefix}https://${url}${suffix}`,
+      (match, prefix, quote, quotedValue, unquotedValue) => {
+        const value = quotedValue ?? unquotedValue ?? "";
+        const trimmedValue = value.trim();
+
+        if (!/^(?:\/\/|http:\/\/)/i.test(trimmedValue)) {
+          return match;
+        }
+
+        const normalizedValue = trimmedValue.replace(
+          /^(?:\/\/|http:\/\/)/i,
+          "https://",
+        );
+
+        if (quote) {
+          const leadingWhitespace = value.match(/^\s*/)?.[0] ?? "";
+          const trailingWhitespace = value.match(/\s*$/)?.[0] ?? "";
+          return `${prefix}${quote}${leadingWhitespace}${normalizedValue}${trailingWhitespace}${quote}`;
+        }
+
+        return `${prefix}${normalizedValue}`;
+      },
     );
 
     if (updatedTag !== tag) {

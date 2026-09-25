@@ -4,7 +4,7 @@ export const protocolTest = {
   <head>
     <LINK href = "//fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <script src= '//code.jquery.com/jquery-3.6.0.min.js'></script>
-    <ScRiPt src = "http://d3js.org/d3.v3.min.js"></ScRiPt>
+    <ScRiPt src = HTTP://d3js.org/d3.v3.min.js></ScRiPt>
   </head>
   <body>
     <ImG alt="Protocol > Test Image" src = "http://example.com/image.png">
