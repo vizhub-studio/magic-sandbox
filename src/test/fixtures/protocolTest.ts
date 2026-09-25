@@ -8,6 +8,7 @@ export const protocolTest = {
   </head>
   <body>
     <img src="http://example.com/image.png" alt="Protocol Test Image">
+    <a href="http://example.com/page">Example Link</a>
     <div>Protocol Test</div>
     <script>
       console.log('Protocol test loaded');

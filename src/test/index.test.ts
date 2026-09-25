@@ -91,6 +91,7 @@ describe("Magic Sandbox", () => {
     expect(srcdoc).toContain('src="https://code.jquery.com');
     expect(srcdoc).toContain('src="https://d3js.org/d3.v3.min.js');
     expect(srcdoc).toContain('src="https://example.com/image.png');
+    expect(srcdoc).toContain('href="http://example.com/page"');
   });
 });
 
