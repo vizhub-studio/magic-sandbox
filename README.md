@@ -4,6 +4,19 @@ A powerful library for creating HTML sandboxes that support multiple dynamic fil
 
 [![npm version](https://img.shields.io/npm/v/magic-sandbox.svg)](https://www.npmjs.com/package/magic-sandbox)
 
+## Development, API, and embedding caveats
+
+This is an HTML sandbox **library**, not a hosted VizHub service. The public entry point is [`src/index.ts`](src/index.ts); request interception and URL handling live in [`src/generateInterceptorScript.ts`](src/generateInterceptorScript.ts) and [`src/fixProtocollessUrls.ts`](src/fixProtocollessUrls.ts).
+
+```bash
+npm ci
+npm run typecheck
+npm test
+npm run build
+```
+
+These commands are defined in [`package.json`](package.json) and do not deploy anything. Embedding generated HTML from untrusted authors requires an independent review of iframe origin, sandbox permissions, resource loading, and Content Security Policy. A library's ability to intercept resource requests is **not** proof that arbitrary code execution is isolated from the embedding application. Verify these boundaries in the consuming product.
+
 ## Overview
 
 The magic-sandbox library allows you to combine multiple HTML, CSS, JavaScript, and data files into a single HTML document that works in any modern browser. It intelligently intercepts network requests to provide a seamless experience for code demonstrations, educational tools, and interactive editors.
