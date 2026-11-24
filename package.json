@@ -47,16 +47,16 @@
     "url": "https://github.com/vizhub-core/magic-sandbox/issues"
   },
   "devDependencies": {
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.6.6",
     "eslint": "10.15.0",
-    "npm-check-updates": "^22.2.7",
-    "prettier": "^3.8.4",
-    "puppeteer": "^25.2.0",
+    "npm-check-updates": "^23.1.1",
+    "prettier": "^3.10.1",
+    "puppeteer": "^25.18.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "8.73.0",
-    "vitest": "^4.1.9"
+    "typescript-eslint": "8.74.0",
+    "vitest": "^5.1.1"
   },
   "dependencies": {
-    "@vizhub/viz-types": "^0.5.0"
+    "@vizhub/viz-types": "^1.0.0"
   }
 }
