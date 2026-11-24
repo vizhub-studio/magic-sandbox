@@ -22,7 +22,8 @@
     "typecheck": "tsc --noEmit",
     "prettier": "prettier {*.*,**/*.*} --write",
     "prepublishOnly": "npm run build",
-    "upgrade": "ncu -u"
+    "upgrade": "ncu -u",
+    "lint": "eslint --config .github/ci/eslint.config.mjs src"
   },
   "keywords": [
     "sandbox",
@@ -47,10 +48,12 @@
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
+    "eslint": "10.15.0",
     "npm-check-updates": "^22.2.7",
     "prettier": "^3.8.4",
     "puppeteer": "^25.2.0",
     "typescript": "^6.0.3",
+    "typescript-eslint": "8.73.0",
     "vitest": "^4.1.9"
   },
   "dependencies": {
