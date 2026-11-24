@@ -9,7 +9,10 @@ export async function testInBrowserWithProxyParent(
   browser: Browser,
   files: FileCollection,
   proxyRoutes: ProxyRoute[],
-  responseMap: Record<string, string | null | { status: number; error?: string; content?: string }>, // null = legacy error; absent = timeout
+  responseMap: Record<
+    string,
+    string | null | { status: number; error?: string; content?: string }
+  >, // null = legacy error; absent = timeout
   expectedLog: string,
   timeoutMs?: number,
 ) {

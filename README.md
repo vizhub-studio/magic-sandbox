@@ -28,7 +28,7 @@ Originally extracted from the [Blockbuilder Project](https://github.com/enjalot/
 - **File Bundling**: Combines multiple files into a single HTML document
 - **Request Interception**: Intercepts XMLHttpRequest and fetch calls to load files without network requests
 - **Automatic Processing**: Inlines JavaScript and CSS files referenced in HTML
-- **Protocol Fix**: Converts protocol-less URLs (//example.com) to HTTPS
+- **Protocol Fix**: Converts protocol-less (//example.com) and http:// asset URLs in `<link href>`, `<script src>`, and `<img src>` to HTTPS
 - **Multiple File Types**: Supports HTML, CSS, JavaScript, XML, CSV, and other file formats
 - **ProxyRoute API**: Forward matching file requests to the parent window via postMessage for runtime dataset resolution
 
@@ -130,6 +130,8 @@ const files: FileCollection = {
 const html = magicSandbox(files, { proxyRoutes: routes });
 ```
 
+The `options` argument also accepts `proxyTimeoutMs` (default `30000`), the number of milliseconds to wait for the parent to respond before the request fails with a `504` status.
+
 ### Pattern Matching
 
 Each path in `paths` supports three matching modes:
@@ -161,8 +163,11 @@ interface ProxyRequest {
   type: "proxyRequest";
   requestId: string; // Unique ID to correlate the response
   path: string; // The normalised file path being requested
+  method: "GET"; // Only GET requests are proxied
 }
 ```
+
+Non-GET requests to a proxied path are answered in the sandbox with a `405` status and are not sent to the parent.
 
 **Parent → Sandbox (`message` event listener):**
 
@@ -173,9 +178,12 @@ interface ProxyResponse {
   type: "proxyResponse";
   requestId: string; // Echoes the original requestId
   content?: string; // The file contents (on success)
+  status?: number; // Optional HTTP status (200–599); defaults to 200, or 404 when error is set
   error?: string; // Error message (on failure)
 }
 ```
+
+A response with `error` set, or a `status` outside 2xx, makes the sandboxed `fetch`/XHR call fail with `ok: false`. If the parent does not respond within `proxyTimeoutMs`, the request fails with a `504` status.
 
 ### Parent Window Integration Example
 
