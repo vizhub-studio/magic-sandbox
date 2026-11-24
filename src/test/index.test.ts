@@ -90,9 +90,7 @@ describe("Magic Sandbox", () => {
     expect(srcdoc).toMatch(
       /href\s*=\s*(?:["'])?https:\/\/fonts\.googleapis\.com/i,
     );
-    expect(srcdoc).toMatch(
-      /src\s*=\s*(?:["'])?https:\/\/code\.jquery\.com/i,
-    );
+    expect(srcdoc).toMatch(/src\s*=\s*(?:["'])?https:\/\/code\.jquery\.com/i);
     expect(srcdoc).toMatch(
       /src\s*=\s*(?:["'])?https:\/\/d3js\.org\/d3\.v3\.min\.js/i,
     );
