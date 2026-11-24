@@ -9,7 +9,7 @@ export async function testInBrowserWithProxyParent(
   browser: Browser,
   files: FileCollection,
   proxyRoutes: ProxyRoute[],
-  responseMap: Record<string, string | null>, // null = respond with error, absent = no response (timeout)
+  responseMap: Record<string, string | null | { status: number; error?: string; content?: string }>, // null = legacy error; absent = timeout
   expectedLog: string,
   timeoutMs?: number,
 ) {
@@ -52,6 +52,12 @@ export async function testInBrowserWithProxyParent(
             type: 'proxyResponse',
             requestId: event.data.requestId,
             error: 'not found',
+          }, '*');
+        } else if (typeof val === 'object') {
+          event.source.postMessage({
+            type: 'proxyResponse',
+            requestId: event.data.requestId,
+            ...val,
           }, '*');
         } else {
           event.source.postMessage({

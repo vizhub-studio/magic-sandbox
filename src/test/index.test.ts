@@ -188,3 +188,37 @@ describe("ProxyRoute", () => {
     );
   });
 });
+
+describe("Proxy HTTP semantics", () => {
+  const files = (script: string) => ({
+    "index.html": '<!DOCTYPE html><html><body><script src="index.js"></script></body></html>',
+    "index.js": script,
+  });
+  it("preserves query strings and explicit upstream status", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      files('fetch("/api-data/weather?city=Albany").then(r => console.log(r.status))'),
+      [{ paths: ["/api-data/*"] }],
+      { "/api-data/weather?city=Albany": { status: 429, error: "Limited" } },
+      "429",
+    );
+  });
+  it("rejects non-GET proxy fetches locally", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      files('fetch("/api-data/weather", { method: "POST" }).then(r => console.log(r.status))'),
+      [{ paths: ["/api-data/*"] }],
+      { "/api-data/weather": "Unexpected parent dispatch" },
+      "405",
+    );
+  });
+  it("sets XHR status from the proxy response", async () => {
+    await testInBrowserWithProxyParent(
+      browser,
+      files('const xhr = new XMLHttpRequest(); xhr.open("GET", "/api-data/weather"); xhr.onload = () => console.log(xhr.status); xhr.send();'),
+      [{ paths: ["/api-data/*"] }],
+      { "/api-data/weather": { status: 503, error: "Unavailable" } },
+      "503",
+    );
+  });
+});
