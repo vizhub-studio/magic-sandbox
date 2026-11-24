@@ -21,7 +21,7 @@ export function generateInterceptorScript(
     const __filesURI = "${filesString}";
     const __files = JSON.parse(decodeURIComponent(__filesURI));
     const __fileNames = ${JSON.stringify(fileNames)};
-    const __proxyRoutes = ${proxyConfig} || (window.__magicSandboxProxyRoutes || null);
+    let __proxyRoutes = ${proxyConfig} || (window.__magicSandboxProxyRoutes || null);
 
     // If proxy routes were provided via window variable, use them
     if (!__proxyRoutes && window.__magicSandboxProxyRoutes) {
@@ -50,7 +50,16 @@ export function generateInterceptorScript(
     }
 
     // Helper: resolve a proxied request via postMessage to parent
-    function __proxyFetch(url, normalizedUrl) {
+    function __proxyFetch(url, normalizedUrl, method) {
+      if (String(method || 'GET').toUpperCase() !== 'GET') {
+        return Promise.resolve({
+          ok: false, status: 405, statusText: 'Method Not Allowed', url: url,
+          text: function() { return Promise.resolve(''); },
+          json: function() { return Promise.reject(new Error('Method not allowed')); },
+          blob: function() { return Promise.reject(new Error('Method not allowed')); },
+          arrayBuffer: function() { return Promise.reject(new Error('Method not allowed')); },
+        });
+      }
       return new Promise(function(resolve, reject) {
         var requestId = Math.random().toString(36).slice(2);
         var timedOut = false;
@@ -68,22 +77,23 @@ export function generateInterceptorScript(
         }, ${timeoutVal});
         function handler(event) {
           if (timedOut) return;
-          if (event.data.type === 'proxyResponse' && event.data.requestId === requestId) {
+          if (event.source === window.parent && event.data && event.data.type === 'proxyResponse' && event.data.requestId === requestId) {
             clearTimeout(timeoutId);
             window.removeEventListener('message', handler);
             var d = event.data;
-            if (d.error) {
+            var status = Number.isInteger(d.status) && d.status >= 200 && d.status <= 599 ? d.status : (d.error ? 404 : 200);
+            if (d.error || status < 200 || status >= 300) {
               resolve({
-                ok: false, status: 404, statusText: 'Not Found',
+                ok: false, status: status, statusText: status === 404 ? 'Not Found' : 'Proxy Error',
                 url: url,
                 text: function() { return Promise.resolve(''); },
-                json: function() { return Promise.reject(new Error(d.error)); },
-                blob: function() { return Promise.reject(new Error(d.error)); },
-                arrayBuffer: function() { return Promise.reject(new Error(d.error)); },
+                json: function() { return Promise.reject(new Error(typeof d.error === 'string' ? d.error : 'Proxy request failed')); },
+                blob: function() { return Promise.reject(new Error(typeof d.error === 'string' ? d.error : 'Proxy request failed')); },
+                arrayBuffer: function() { return Promise.reject(new Error(typeof d.error === 'string' ? d.error : 'Proxy request failed')); },
               });
             } else {
               resolve({
-                ok: true, status: 200, statusText: 'OK', url: url,
+                ok: true, status: status, statusText: 'OK', url: url,
                 text: function() { return Promise.resolve(d.content); },
                 json: function() { return Promise.resolve(JSON.parse(d.content)); },
                 blob: function() { return Promise.resolve(new Blob([d.content])); },
@@ -102,6 +112,7 @@ export function generateInterceptorScript(
           type: 'proxyRequest',
           requestId: requestId,
           path: normalizedUrl,
+          method: 'GET',
         }, '*');
       });
     }
@@ -139,8 +150,9 @@ export function generateInterceptorScript(
       const proxyRoute = __findProxyRoute(normalizedUrl);
       if (proxyRoute) {
         this.proxyPath = normalizedUrl;
-        this.readyState = 4;
-        this.status = 200;
+        this.proxyMethod = method;
+        this.readyState = 1;
+        this.status = 0;
         return;
       }
       
@@ -192,8 +204,11 @@ export function generateInterceptorScript(
       
       // Handle proxy routes via postMessage
       if (that.proxyPath) {
-        __proxyFetch(null, that.proxyPath).then(function(response) {
+        __proxyFetch(null, that.proxyPath, that.proxyMethod).then(function(response) {
           response.text().then(function(text) {
+            that.readyState = 4;
+            that.status = response.status;
+            that.statusText = response.statusText;
             that.responseText = text;
             if (that.onreadystatechange) that.onreadystatechange();
             if (that.onload) that.onload();
@@ -283,7 +298,7 @@ export function generateInterceptorScript(
       // Check proxy routes FIRST
       const proxyRoute = __findProxyRoute(normalizedUrl);
       if (proxyRoute) {
-        return __proxyFetch(url, normalizedUrl);
+        return __proxyFetch(url, normalizedUrl, (init && init.method) || (input instanceof Request ? input.method : 'GET'));
       }
       
       // Intercept requests for local files
