@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install dependencies
+        id: install
+        run: npm ci
+      - name: Install isolated ESLint tooling
+        id: lint_tools
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm install --prefix "$RUNNER_TEMP/vizhub-lint" --no-audit --no-fund --ignore-scripts --save-exact eslint@10.15.0 typescript-eslint@8.73.0 typescript@6.0.3
+      - name: ESLint
+        if: ${{ !cancelled() && steps.lint_tools.outcome == 'success' }}
+        run: |
+          cp .github/ci/eslint.config.mjs "$RUNNER_TEMP/vizhub-lint/eslint.config.mjs"
+          "$RUNNER_TEMP/vizhub-lint/node_modules/.bin/eslint" --config "$RUNNER_TEMP/vizhub-lint/eslint.config.mjs" src
+      - name: Type checking
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck
+      - name: Tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm test
+      - name: Package build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run build
